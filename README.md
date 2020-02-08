@@ -1,6 +1,8 @@
 API Specs Comparator
 ====================
 
+[![Build Status](https://travis-ci.com/egoettelmann/api-specs-comparator.svg?branch=master)](https://travis-ci.com/egoettelmann/api-specs-comparator)
+
 This library can be used to compare API specifications in order to detect breaking changes.
 
 The goal is to help preserving backwards compatibility when upgrading APIs.
