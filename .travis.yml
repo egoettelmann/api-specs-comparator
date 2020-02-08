@@ -1,9 +1,7 @@
 # Defining the stages order
 stages:
-  - ci_tests
   - test
   - release
-  - merge
   - next
 
 # Excluding some branches
@@ -16,33 +14,16 @@ cache:
   directories:
     - $HOME/.m2
 
+# Defining vars
+env:
+  - GIT_USER_MAIL="travis@travis-ci.org"
+  - GIT_USER_NAME="Travis CI"
+  - GIT_BRANCH_RELEASE="ci-tests"
+  - GIT_BRANCH_DEVELOP="ci-tests"
+
 # Defining the jobs
 jobs:
   include:
-
-    # Tests for CI
-    - state: ci_tests
-      language: java
-      install: skip
-      before_script:
-        - git config --global user.email "travis@travis-ci.org" || exit
-        - git config --global user.name "Travis CI" || exit
-        - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
-      script:
-        - git status
-        - git fetch --all || exit
-        - git checkout ci-tests || exit
-        - git merge --ff-only "$TRAVIS_COMMIT" || exit
-        - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false || exit
-        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
-        - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
-        - git add . || exit
-        - git status
-        - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
-        - git tag -a "$PROJECT_VERSION" || exit
-        - git status
-        - git log -3
-        - exit 1
 
     # Tests
     - stage: test
@@ -59,30 +40,21 @@ jobs:
       before_script:
         - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import || exit
         - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust || exit
+        - git config --global user.email "$GIT_USER_MAIL" || exit
+        - git config --global user.name "$GIT_USER_NAME" || exit
+        - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
+        - git fetch --all || exit
+        - git checkout "$GIT_BRANCH_RELEASE" || exit
+        - git merge --ff-only "$TRAVIS_COMMIT" || exit
       script:
         - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false || exit
         #- mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
-
-    # Merge to master and push
-    - stage: merge
-      language: java
-      if: (NOT type IN (pull_request)) AND (branch = develop)
-      install: skip
-      before_script:
-        - git config --global user.email "travis@travis-ci.org" || exit
-        - git config --global user.name "Travis CI" || exit
-        - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
-        - git fetch --all || exit
-        - git checkout ci-tests || exit
-        - git merge --ff-only "$TRAVIS_COMMIT" || exit
-      script:
         - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
-        - git status
         - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
-        - git tag -a "$PROJECT_VERSION" || exit
-        - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
+        - git tag -a "$PROJECT_VERSION" -m "Release $PROJECT_VERSION" || exit
+        - git push origin || exit
 
     # Next development iteration
     - stage: next
@@ -90,16 +62,16 @@ jobs:
       if: (NOT type IN (pull_request)) AND (branch = develop)
       install: skip
       before_script:
-        - git config --global user.email "travis@travis-ci.org" || exit
-        - git config --global user.name "Travis CI" || exit
+        - git config --global user.email "$GIT_USER_MAIL" || exit
+        - git config --global user.name "$GIT_USER_NAME" || exit
         - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
         - git fetch --all || exit
-        - git checkout ci-tests || exit
-        - git merge --ff-only "$TRAVIS_COMMIT" || exit
+        - git checkout "$GIT_BRANCH_DEVELOP" || exit
+        - git merge --ff-only "$GIT_BRANCH_RELEASE" || exit
       script:
         - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false || exit
         - mvn help:evaluate -N -Dexpression=project.version|grep -v '\[' || exit
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
         - git commit -m "[Travis CI] Next development iteration $PROJECT_VERSION" || exit
-        - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
+        - git push origin || exit
