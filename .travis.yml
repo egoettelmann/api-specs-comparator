@@ -55,7 +55,7 @@ jobs:
         - git add . || exit
         - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
         - git tag -a "$PROJECT_VERSION" -m "Release $PROJECT_VERSION" || exit
-        - git push origin || exit
+        - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
 
     # Next development iteration
     - stage: next
@@ -75,4 +75,4 @@ jobs:
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
         - git commit -m "[Travis CI] Next development iteration $PROJECT_VERSION" || exit
-        - git push origin || exit
+        - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
