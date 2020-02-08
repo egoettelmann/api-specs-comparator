@@ -48,9 +48,9 @@ jobs:
         - git checkout "$GIT_BRANCH_RELEASE" || exit
         - git merge --ff-only "$TRAVIS_COMMIT" || exit
       script:
-        - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
-        - mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
-        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+        - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false || exit
+        - mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
+        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\[' || exit
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
         - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
@@ -70,8 +70,8 @@ jobs:
         - git checkout "$GIT_BRANCH_DEVELOP" || exit
         - git merge --ff-only "$GIT_BRANCH_RELEASE" || exit
       script:
-        - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
-        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+        - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false || exit
+        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\[' || exit
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
         - git commit -m "[Travis CI] Next development iteration $PROJECT_VERSION" || exit
