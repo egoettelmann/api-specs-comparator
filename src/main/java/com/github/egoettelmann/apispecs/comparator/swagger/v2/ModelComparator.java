@@ -1,9 +1,6 @@
 package com.github.egoettelmann.apispecs.comparator.swagger.v2;
 
-import com.github.egoettelmann.apispecs.comparator.Comparator;
-import com.github.egoettelmann.apispecs.comparator.ComparatorChain;
-import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
-import com.github.egoettelmann.apispecs.comparator.ComparisonResult;
+import com.github.egoettelmann.apispecs.comparator.*;
 import com.github.egoettelmann.apispecs.comparator.changes.BreakingChange;
 import com.github.egoettelmann.apispecs.comparator.changes.ChangedModelProperty;
 import com.github.egoettelmann.apispecs.comparator.changes.RemovedModelProperty;
@@ -27,7 +24,7 @@ public class ModelComparator implements Comparator<Model, Model> {
         ComparisonResult result = new ComparisonResult();
 
         if (context.source().getProperties() == null) {
-            Model oldModel = extractSourceDefinition(context, context.source().getReference());
+            Model oldModel = ComparisonUtils.extractSourceDefinition(context, context.source().getReference());
             ComparisonContext<Model, Model> modelContext = context.extend(oldModel, context.target());
             ComparisonResult modelResult = chain.apply(modelContext);
             result.merge(modelResult);
@@ -35,7 +32,7 @@ public class ModelComparator implements Comparator<Model, Model> {
         }
 
         if (context.target().getProperties() == null) {
-            Model targetModel = extractTargetDefinition(context, context.target().getReference());
+            Model targetModel = ComparisonUtils.extractTargetDefinition(context, context.target().getReference());
             ComparisonContext<Model, Model> modelContext = context.extend(context.source(), targetModel);
             ComparisonResult modelResult = chain.apply(modelContext);
             result.merge(modelResult);
@@ -147,31 +144,6 @@ public class ModelComparator implements Comparator<Model, Model> {
         }
 
         return result;
-    }
-
-    private Model extractSourceDefinition(ComparisonContext<?, ?> context, String reference) {
-        ComparisonContext<?, ?> root = context.root();
-        if (root.source() instanceof Swagger) {
-            ComparisonContext<Swagger, ?> swaggerRoot = (ComparisonContext<Swagger, ?>) root;
-            return swaggerRoot.source().getDefinitions().get(simpleReference(reference));
-        }
-        return null;
-    }
-
-    private Model extractTargetDefinition(ComparisonContext<?, ?> context, String reference) {
-        ComparisonContext<?, ?> root = context.root();
-        if (root.target() instanceof Swagger) {
-            ComparisonContext<?, Swagger> swaggerRoot = (ComparisonContext<?, Swagger>) root;
-            return swaggerRoot.target().getDefinitions().get(simpleReference(reference));
-        }
-        return null;
-    }
-
-    private String simpleReference(String reference) {
-        if (reference == null) {
-            return null;
-        }
-        return reference.replace("#/definitions/", "");
     }
 
 }

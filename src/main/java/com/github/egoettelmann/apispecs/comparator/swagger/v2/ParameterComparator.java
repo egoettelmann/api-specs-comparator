@@ -1,9 +1,6 @@
 package com.github.egoettelmann.apispecs.comparator.swagger.v2;
 
-import com.github.egoettelmann.apispecs.comparator.Comparator;
-import com.github.egoettelmann.apispecs.comparator.ComparatorChain;
-import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
-import com.github.egoettelmann.apispecs.comparator.ComparisonResult;
+import com.github.egoettelmann.apispecs.comparator.*;
 import com.github.egoettelmann.apispecs.comparator.changes.BreakingChange;
 import com.github.egoettelmann.apispecs.comparator.changes.ChangedRequestParameterType;
 import io.swagger.models.Model;
@@ -37,7 +34,7 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
         // TODO: some types are backwards compatible
         //  - if a number becomes a string: ok
         //  - if an integer becomes a number: ok
-        if (context.target() instanceof AbstractSerializableParameter) {
+        if (context.source() instanceof AbstractSerializableParameter) {
             AbstractSerializableParameter oldTypedParam = (AbstractSerializableParameter) context.source();
             AbstractSerializableParameter newTypedParam = (AbstractSerializableParameter) context.target();
             if (!newTypedParam.getType().equals(oldTypedParam.getType())) {
@@ -50,7 +47,7 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
             }
         }
 
-        if (context.target() instanceof BodyParameter) {
+        if (context.source() instanceof BodyParameter) {
             BodyParameter oldBodyParam = (BodyParameter) context.source();
             BodyParameter newBodyParam = (BodyParameter) context.target();
             Model oldSchema = oldBodyParam.getSchema();
@@ -60,10 +57,14 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
             result.merge(modelResult);
         }
 
-        if (context.target() instanceof RefParameter) {
+        if (context.source() instanceof RefParameter) {
             RefParameter oldRefParameter = (RefParameter) context.source();
             RefParameter newRefParameter = (RefParameter) context.target();
-            // TODO: get model from ref
+            Model oldSchema = ComparisonUtils.extractSourceDefinition(context, oldRefParameter.getSimpleRef());
+            Model newSchema = ComparisonUtils.extractTargetDefinition(context, newRefParameter.getSimpleRef());
+            ComparisonContext<Model, Model> modelContext = context.extend(oldSchema, newSchema);
+            ComparisonResult modelResult = chain.apply(modelContext);
+            result.merge(modelResult);
         }
 
         return result;
