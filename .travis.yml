@@ -17,11 +17,15 @@ jobs:
     # Tests
     - stage: test
       language: java
+      install: skip
+      script:
+        - mvn clean test || exit
 
     # Release to Maven Central
     - stage: release
       language: java
       if: (NOT type IN (pull_request)) AND (branch = develop)
+      install: skip
       script:
         - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import || exit
         - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust || exit
@@ -30,7 +34,9 @@ jobs:
 
     # Merge to master and push
     - stage: merge
+      language: java
       if: (NOT type IN (pull_request)) AND (branch = develop)
+      install: skip
       script:
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git config --global user.email "travis@travis-ci.org" || exit
@@ -46,7 +52,9 @@ jobs:
 
     # Next development iteration
     - stage: next
+      language: java
       if: (NOT type IN (pull_request)) AND (branch = develop)
+      install: skip
       script:
         - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false || exit
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
