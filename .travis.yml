@@ -16,10 +16,11 @@ cache:
 
 # Defining vars
 env:
-  - GIT_USER_MAIL="travis@travis-ci.org"
-  - GIT_USER_NAME="Travis CI"
-  - GIT_BRANCH_RELEASE="ci-tests"
-  - GIT_BRANCH_DEVELOP="ci-tests"
+  global:
+    - GIT_USER_MAIL="travis@travis-ci.org"
+    - GIT_USER_NAME="Travis CI"
+    - GIT_BRANCH_RELEASE="ci-tests"
+    - GIT_BRANCH_DEVELOP="ci-tests"
 
 # Defining the jobs
 jobs:
