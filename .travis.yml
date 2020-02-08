@@ -19,8 +19,8 @@ env:
   global:
     - GIT_USER_MAIL="travis@travis-ci.org"
     - GIT_USER_NAME="Travis CI"
-    - GIT_BRANCH_RELEASE="ci-tests"
-    - GIT_BRANCH_DEVELOP="ci-tests"
+    - GIT_BRANCH_RELEASE="master"
+    - GIT_BRANCH_DEVELOP="develop"
 
 # Defining the jobs
 jobs:
@@ -36,7 +36,7 @@ jobs:
     # Release to Maven Central
     - stage: release
       language: java
-      if: (NOT type IN (pull_request)) AND (branch = develop)
+      if: (NOT type IN (pull_request)) AND (branch = release)
       install: skip
       before_script:
         - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import || exit
@@ -49,7 +49,7 @@ jobs:
         - git merge --ff-only "$TRAVIS_COMMIT" || exit
       script:
         - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false || exit
-        #- mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
+        - mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
         - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
@@ -60,7 +60,7 @@ jobs:
     # Next development iteration
     - stage: next
       language: java
-      if: (NOT type IN (pull_request)) AND (branch = develop)
+      if: (NOT type IN (pull_request)) AND (branch = release)
       install: skip
       before_script:
         - git config --global user.email "$GIT_USER_MAIL" || exit
