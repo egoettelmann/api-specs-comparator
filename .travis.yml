@@ -1,9 +1,6 @@
 # Defining the stages order
 stages:
-  - test
-  - release
-  - merge
-  - next
+  - ci_tests
 
 # Excluding some branches
 branches:
@@ -18,6 +15,27 @@ cache:
 # Defining the jobs
 jobs:
   include:
+
+    # Tests for CI
+    - state: ci_tests
+      language: java
+      install: skip
+      before_script:
+        - git config --global user.email "travis@travis-ci.org" || exit
+        - git config --global user.name "Travis CI" || exit
+        - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
+      script:
+        - git status
+        - git fetch --all || exit
+        - git checkout ci-tests || exit
+        - git merge --ff-only "$TRAVIS_COMMIT" || exit
+        - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false || exit
+        - git add . || exit
+        - git status
+        - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
+        - git tag -a "$PROJECT_VERSION" || exit
+        - git status
+        - git log -3
 
     # Tests
     - stage: test
@@ -54,6 +72,7 @@ jobs:
         - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
+        - git status
         - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
         - git tag -a "$PROJECT_VERSION" || exit
         - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
@@ -72,7 +91,7 @@ jobs:
         - git merge --ff-only "$TRAVIS_COMMIT" || exit
       script:
         - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false || exit
-        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\[' || exit
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
         - git commit -m "[Travis CI] Next development iteration $PROJECT_VERSION" || exit
