@@ -3,6 +3,7 @@ stages:
   - test
   - release
   - merge
+  - next
 
 # Excluding some branches
 branches:
@@ -20,18 +21,35 @@ jobs:
     # Release to Maven Central
     - stage: release
       language: java
-      if: (NOT type IN (pull_request)) AND (branch = release)
+      if: (NOT type IN (pull_request)) AND (branch = develop)
       script:
         - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import || exit
         - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust || exit
-        - mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
+        - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false || exit
+        #- mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
 
     # Merge to master and push
     - stage: merge
-      if: (NOT type IN (pull_request)) AND (branch = release)
+      if: (NOT type IN (pull_request)) AND (branch = develop)
       script:
+        - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
+        - git config --global user.email "travis@travis-ci.org" || exit
+        - git config --global user.name "Travis CI" || exit
+        - git add . || exit
+        - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
+        - git tag -a "$PROJECT_VERSION" || exit
         - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
         - git fetch --all || exit
-        - git checkout master || exit
+        - git checkout ci-tests || exit
         - git merge --ff-only "$TRAVIS_COMMIT" || exit
+        - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
+
+    # Next development iteration
+    - stage: next
+      if: (NOT type IN (pull_request)) AND (branch = develop)
+      script:
+        - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false || exit
+        - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
+        - git add . || exit
+        - git commit -m "[Travis CI] Next development iteration $PROJECT_VERSION" || exit
         - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
