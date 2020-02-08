@@ -1,1 +1,37 @@
-language: java
+# Defining the stages order
+stages:
+  - test
+  - release
+  - merge
+
+# Excluding some branches
+branches:
+  except:
+    - master
+
+# Defining the jobs
+jobs:
+  include:
+
+    # Tests
+    - stage: test
+      language: java
+
+    # Release to Maven Central
+    - stage: release
+      language: java
+      if: (NOT type IN (pull_request)) AND (branch = release)
+      script:
+        - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import || exit
+        - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust || exit
+        - mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
+
+    # Merge to master and push
+    - stage: merge
+      if: (NOT type IN (pull_request)) AND (branch = release)
+      script:
+        - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
+        - git fetch --all || exit
+        - git checkout master || exit
+        - git merge --ff-only "$TRAVIS_COMMIT" || exit
+        - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
