@@ -10,6 +10,11 @@ branches:
   except:
     - master
 
+# Caching Maven repository
+cache:
+  directories:
+    - $HOME/.m2
+
 # Defining the jobs
 jobs:
   include:
@@ -26,9 +31,10 @@ jobs:
       language: java
       if: (NOT type IN (pull_request)) AND (branch = develop)
       install: skip
-      script:
+      before_script:
         - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import || exit
         - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust || exit
+      script:
         - mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false || exit
         #- mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease || exit
 
@@ -37,18 +43,19 @@ jobs:
       language: java
       if: (NOT type IN (pull_request)) AND (branch = develop)
       install: skip
-      script:
-        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
-        - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
+      before_script:
         - git config --global user.email "travis@travis-ci.org" || exit
         - git config --global user.name "Travis CI" || exit
-        - git add . || exit
-        - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
-        - git tag -a "$PROJECT_VERSION" || exit
         - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
         - git fetch --all || exit
         - git checkout ci-tests || exit
         - git merge --ff-only "$TRAVIS_COMMIT" || exit
+      script:
+        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+        - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
+        - git add . || exit
+        - git commit -m "[Travis CI] Release $PROJECT_VERSION" || exit
+        - git tag -a "$PROJECT_VERSION" || exit
         - git push https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git || exit
 
     # Next development iteration
@@ -56,6 +63,13 @@ jobs:
       language: java
       if: (NOT type IN (pull_request)) AND (branch = develop)
       install: skip
+      before_script:
+        - git config --global user.email "travis@travis-ci.org" || exit
+        - git config --global user.name "Travis CI" || exit
+        - git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* || exit
+        - git fetch --all || exit
+        - git checkout ci-tests || exit
+        - git merge --ff-only "$TRAVIS_COMMIT" || exit
       script:
         - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false || exit
         - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
