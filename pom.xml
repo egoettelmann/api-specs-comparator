@@ -10,6 +10,9 @@
     <name>API Specifications Comparator</name>
     <description>Compare API specifications to detect breaking changes</description>
 
+    <!-- Project URL -->
+    <url>https://github.com/egoettelmann/api-specs-comparator</url>
+
     <!-- License -->
     <licenses>
         <license>
@@ -25,15 +28,8 @@
         <url>https://github.com/egoettelmann/api-specs-comparator</url>
     </scm>
 
-    <!-- Distribution Management -->
+    <!-- Repositories -->
     <distributionManagement>
-        <!-- Wiki -->
-        <site>
-            <id>readme</id>
-            <url>https://github.com/egoettelmann/api-specs-comparator</url>
-        </site>
-
-        <!-- Repositories -->
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
