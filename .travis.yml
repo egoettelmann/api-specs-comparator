@@ -38,6 +38,7 @@ jobs:
       if: (NOT type IN (pull_request)) AND (branch = develop)
       install: skip
       script:
+        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git config --global user.email "travis@travis-ci.org" || exit
         - git config --global user.name "Travis CI" || exit
@@ -57,6 +58,7 @@ jobs:
       install: skip
       script:
         - mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false || exit
+        - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
         - export PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[') || exit
         - git add . || exit
         - git commit -m "[Travis CI] Next development iteration $PROJECT_VERSION" || exit
