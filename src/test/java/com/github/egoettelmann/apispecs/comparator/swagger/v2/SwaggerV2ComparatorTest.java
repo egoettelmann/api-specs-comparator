@@ -69,4 +69,15 @@ public class SwaggerV2ComparatorTest {
         Assert.assertEquals("There should be 2 breaking changes", 2, result.get().getBreakingChanges().size());
     }
 
+    @Test
+    public void testCompare_removedDefinitionProperty_shouldHave_threeBreakingChanges() throws IOException {
+        InputStream isSpecsNew = getClass().getResourceAsStream("/specs-006-new.json");
+        String specsNew = IOUtils.toString(isSpecsNew);
+        InputStream isSpecsOld = getClass().getResourceAsStream("/specs-006-old.json");
+        String specsOld = IOUtils.toString(isSpecsOld);
+        Optional<ComparisonResult> result = comparator.compare(specsOld, specsNew);
+        Assert.assertTrue("Comparison result should not be null", result.isPresent());
+        Assert.assertEquals("There should be 3 breaking changes", 3, result.get().getBreakingChanges().size());
+    }
+
 }
