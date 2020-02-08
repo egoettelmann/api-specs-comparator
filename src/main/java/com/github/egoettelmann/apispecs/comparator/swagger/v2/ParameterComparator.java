@@ -57,6 +57,7 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
             result.merge(modelResult);
         }
 
+        // TODO: add a unit test for this case
         if (context.source() instanceof RefParameter) {
             RefParameter oldRefParameter = (RefParameter) context.source();
             RefParameter newRefParameter = (RefParameter) context.target();
