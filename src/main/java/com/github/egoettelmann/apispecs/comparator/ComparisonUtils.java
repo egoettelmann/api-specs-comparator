@@ -3,7 +3,11 @@ package com.github.egoettelmann.apispecs.comparator;
 import io.swagger.models.Model;
 import io.swagger.models.Swagger;
 
+import java.util.List;
+
 public class ComparisonUtils {
+
+    private static final String DEFINITIONS_PREFIX = "#/definitions/";
 
     private ComparisonUtils() {
         // Private constructor
@@ -31,7 +35,17 @@ public class ComparisonUtils {
         if (reference == null) {
             return null;
         }
-        return reference.replace("#/definitions/", "");
+        return reference.replace(DEFINITIONS_PREFIX, "");
+    }
+
+    public static boolean enumerationsAreCompatible(List<String> oldEnumeration, List<String> newEnumeration) {
+        if (newEnumeration != null && !newEnumeration.isEmpty()) {
+            if (oldEnumeration == null || oldEnumeration.isEmpty()) {
+                return false;
+            }
+            return newEnumeration.containsAll(oldEnumeration);
+        }
+        return true;
     }
 
 }
