@@ -11,6 +11,15 @@ Currently the library supports comparison of Swagger V2 definition files.
 
 ## Usage
 
+Add to your pom the following Maven dependency:
+```xml
+<dependency>
+  <groupId>com.github.egoettelmann</groupId>
+  <artifactId>api-specs-comparator</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
 The comparator requires the content of the specifications to compare (as String).
 
 It can be easily integrated in a unit test to break your CI/CD pipelines on breaking changes of your API.
