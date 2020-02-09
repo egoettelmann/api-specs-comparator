@@ -1,7 +1,9 @@
 API Specs Comparator
 ====================
 
-[![Build Status](https://travis-ci.com/egoettelmann/api-specs-comparator.svg?branch=master)](https://travis-ci.com/egoettelmann/api-specs-comparator)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.egoettelmann/api-specs-comparator?style=flat-square&label=Maven%20Central)](https://search.maven.org/artifact/com.github.egoettelmann/api-specs-comparator)
+![Travis build (master)](https://img.shields.io/travis/com/egoettelmann/api-specs-comparator/master?label=Master&style=flat-square)
+![Travis build (develop)](https://img.shields.io/travis/com/egoettelmann/api-specs-comparator/develop?label=Develop&style=flat-square)
 
 This library can be used to compare API specifications in order to detect breaking changes.
 
