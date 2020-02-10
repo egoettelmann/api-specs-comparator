@@ -14,7 +14,7 @@ public class ComparatorChain {
         ComparisonResult result = new ComparisonResult();
         for (Comparator comparator : comparators) {
             if (comparator.accept(context)) {
-                result.merge(comparator.apply(context, this));
+                result.merge(comparator.apply(context));
             }
         }
         return result;

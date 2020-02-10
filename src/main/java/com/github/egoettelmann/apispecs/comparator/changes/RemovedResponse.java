@@ -1,22 +1,18 @@
 package com.github.egoettelmann.apispecs.comparator.changes;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 
 public class RemovedResponse extends AbstractBreakingChange {
 
-    private String code;
-
-    private RemovedResponse(String message, List<String> path, String code) {
+    private RemovedResponse(String message, List<String> path) {
         super(message, path);
-        this.code = code;
     }
 
-    public static RemovedResponse of(List<String> path, String code) {
-        String message = String.format("Removed response '%s'", code);
-        return new RemovedResponse(message, path, code);
+    public static RemovedResponse of(List<String> path) {
+        String message = String.format("Removed response '%s'", StringUtils.join(path, "/"));
+        return new RemovedResponse(message, path);
     }
 
-    public String code() {
-        return code;
-    }
 }

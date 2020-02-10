@@ -1,24 +1,47 @@
 package com.github.egoettelmann.apispecs.comparator.swagger.v2;
 
-import com.github.egoettelmann.apispecs.comparator.*;
+import com.github.egoettelmann.apispecs.comparator.Comparator;
+import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
+import com.github.egoettelmann.apispecs.comparator.ComparisonResult;
+import com.github.egoettelmann.apispecs.comparator.changes.AddedRequiredRequestParameter;
 import com.github.egoettelmann.apispecs.comparator.changes.BreakingChange;
 import com.github.egoettelmann.apispecs.comparator.changes.ChangedRequestParameterType;
-import io.swagger.models.Model;
+import com.github.egoettelmann.apispecs.comparator.changes.RemovedRequestParameter;
 import io.swagger.models.parameters.AbstractSerializableParameter;
-import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
-import io.swagger.models.parameters.RefParameter;
 
 class ParameterComparator implements Comparator<Parameter, Parameter> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {
-        return (context.source() instanceof Parameter) && (context.target() instanceof Parameter);
+        return (context.source() instanceof Parameter) || (context.target() instanceof Parameter);
     }
 
     @Override
-    public ComparisonResult apply(ComparisonContext<Parameter, Parameter> context, ComparatorChain chain) {
+    public ComparisonResult apply(ComparisonContext<Parameter, Parameter> context) {
         ComparisonResult result = new ComparisonResult();
+
+        // Checking that no parameter has been removed
+        if (context.source() != null && context.target() == null) {
+            BreakingChange breakingChange = RemovedRequestParameter.of(
+                    context.absolutePath(),
+                    context.source().getName(),
+                    context.source().getIn()
+            );
+            result.add(breakingChange);
+            return result;
+        }
+
+        // Checking that no new required attribute has been added
+        if (context.target().getRequired() && (context.source() == null || !context.source().getRequired())) {
+            BreakingChange breakingChange = AddedRequiredRequestParameter.of(
+                    context.absolutePath(),
+                    context.target().getName(),
+                    context.target().getIn()
+            );
+            result.add(breakingChange);
+            return result;
+        }
 
         if (!context.target().getClass().equals(context.source().getClass())) {
             // Should never happen, we should always compare params of same type
@@ -30,6 +53,8 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
             result.add(breakingChange);
             return result;
         }
+
+        // TODO: move this to dedicated classes
 
         // TODO: some types are backwards compatible
         //  - if a number becomes a string: ok
@@ -45,27 +70,6 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
                 );
                 result.add(breakingChange);
             }
-        }
-
-        if (context.source() instanceof BodyParameter) {
-            BodyParameter oldBodyParam = (BodyParameter) context.source();
-            BodyParameter newBodyParam = (BodyParameter) context.target();
-            Model oldSchema = oldBodyParam.getSchema();
-            Model newSchema = newBodyParam.getSchema();
-            ComparisonContext<Model, Model> modelContext = context.extend(oldSchema, newSchema);
-            ComparisonResult modelResult = chain.apply(modelContext);
-            result.merge(modelResult);
-        }
-
-        // TODO: add a unit test for this case
-        if (context.source() instanceof RefParameter) {
-            RefParameter oldRefParameter = (RefParameter) context.source();
-            RefParameter newRefParameter = (RefParameter) context.target();
-            Model oldSchema = ComparisonUtils.extractSourceDefinition(context, oldRefParameter.getSimpleRef());
-            Model newSchema = ComparisonUtils.extractTargetDefinition(context, newRefParameter.getSimpleRef());
-            ComparisonContext<Model, Model> modelContext = context.extend(oldSchema, newSchema);
-            ComparisonResult modelResult = chain.apply(modelContext);
-            result.merge(modelResult);
         }
 
         return result;

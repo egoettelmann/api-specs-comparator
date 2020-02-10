@@ -3,7 +3,6 @@ package com.github.egoettelmann.apispecs.comparator.swagger.v2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.egoettelmann.apispecs.comparator.ApiSpecificationsComparator;
 import com.github.egoettelmann.apispecs.comparator.ComparatorChain;
-import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
 import com.github.egoettelmann.apispecs.comparator.ComparisonResult;
 import io.swagger.models.Swagger;
 import io.swagger.util.Json;
@@ -54,10 +53,9 @@ public class SwaggerV2Comparator implements ApiSpecificationsComparator {
             return Optional.empty();
         }
 
-        // Running comparison
-        ComparisonContext<Swagger, Swagger> context = new ComparisonContext<>(oldSwaggerSpecs, newSwaggerSpecs);
+        SwaggerV2Walker swaggerV2Walker = new SwaggerV2Walker(comparatorChain);
         return Optional.of(
-                comparatorChain.apply(context)
+                swaggerV2Walker.walk(oldSwaggerSpecs, newSwaggerSpecs)
         );
     }
 
@@ -69,7 +67,8 @@ public class SwaggerV2Comparator implements ApiSpecificationsComparator {
                         new OperationComparator(),
                         new ParameterComparator(),
                         new ResponseComparator(),
-                        new ModelComparator()
+                        new ModelComparator(),
+                        new PropertyComparator()
                 )
         );
     }
