@@ -5,6 +5,7 @@ import com.github.egoettelmann.apispecs.comparator.ApiSpecificationsComparator;
 import com.github.egoettelmann.apispecs.comparator.Comparator;
 import com.github.egoettelmann.apispecs.comparator.ComparatorChain;
 import com.github.egoettelmann.apispecs.comparator.ComparisonResult;
+import com.github.egoettelmann.apispecs.comparator.swagger.v2.comparators.*;
 import io.swagger.models.Swagger;
 import io.swagger.util.Json;
 import org.slf4j.Logger;

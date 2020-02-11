@@ -1,4 +1,4 @@
-package com.github.egoettelmann.apispecs.comparator.swagger.v2;
+package com.github.egoettelmann.apispecs.comparator.swagger.v2.comparators;
 
 import com.github.egoettelmann.apispecs.comparator.Comparator;
 import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
@@ -7,7 +7,7 @@ import com.github.egoettelmann.apispecs.comparator.changes.BreakingChange;
 import com.github.egoettelmann.apispecs.comparator.changes.RemovedResponse;
 import io.swagger.models.Response;
 
-class ResponseComparator implements Comparator<Response, Response> {
+public class ResponseComparator implements Comparator<Response, Response> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {

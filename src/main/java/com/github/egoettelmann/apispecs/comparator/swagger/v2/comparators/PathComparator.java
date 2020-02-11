@@ -1,4 +1,4 @@
-package com.github.egoettelmann.apispecs.comparator.swagger.v2;
+package com.github.egoettelmann.apispecs.comparator.swagger.v2.comparators;
 
 import com.github.egoettelmann.apispecs.comparator.Comparator;
 import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
@@ -6,7 +6,7 @@ import com.github.egoettelmann.apispecs.comparator.ComparisonResult;
 import com.github.egoettelmann.apispecs.comparator.changes.RemovedEndpoint;
 import io.swagger.models.Path;
 
-class PathComparator implements Comparator<Path, Path> {
+public class PathComparator implements Comparator<Path, Path> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {

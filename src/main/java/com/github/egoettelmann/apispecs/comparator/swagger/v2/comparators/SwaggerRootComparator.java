@@ -1,4 +1,4 @@
-package com.github.egoettelmann.apispecs.comparator.swagger.v2;
+package com.github.egoettelmann.apispecs.comparator.swagger.v2.comparators;
 
 import com.github.egoettelmann.apispecs.comparator.Comparator;
 import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
@@ -10,7 +10,7 @@ import io.swagger.models.Swagger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class SwaggerRootComparator implements Comparator<Swagger, Swagger> {
+public class SwaggerRootComparator implements Comparator<Swagger, Swagger> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SwaggerRootComparator.class);
 

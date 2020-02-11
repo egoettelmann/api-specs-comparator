@@ -1,4 +1,4 @@
-package com.github.egoettelmann.apispecs.comparator.swagger.v2;
+package com.github.egoettelmann.apispecs.comparator.swagger.v2.comparators;
 
 import com.github.egoettelmann.apispecs.comparator.Comparator;
 import com.github.egoettelmann.apispecs.comparator.ComparisonContext;
