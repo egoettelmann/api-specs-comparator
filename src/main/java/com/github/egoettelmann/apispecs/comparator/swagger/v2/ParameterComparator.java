@@ -14,41 +14,48 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {
-        return (context.source() instanceof Parameter) || (context.target() instanceof Parameter);
+        return context.canCompare(Parameter.class);
     }
 
     @Override
     public ComparisonResult apply(ComparisonContext<Parameter, Parameter> context) {
         ComparisonResult result = new ComparisonResult();
 
+        if (!context.source().isPresent() && !context.target().isPresent()) {
+            // Nothing to compare
+            return result;
+        }
+
         // Checking that no parameter has been removed
-        if (context.source() != null && context.target() == null) {
+        if (context.source().isPresent() && !context.target().isPresent()) {
             BreakingChange breakingChange = RemovedRequestParameter.of(
                     context.absolutePath(),
-                    context.source().getName(),
-                    context.source().getIn()
+                    context.source().get().getName(),
+                    context.source().get().getIn()
             );
             result.add(breakingChange);
             return result;
         }
 
         // Checking that no new required attribute has been added
-        if (context.target().getRequired() && (context.source() == null || !context.source().getRequired())) {
+        if (context.target().get().getRequired() && (!context.source().isPresent() || !context.source().get().getRequired())) {
             BreakingChange breakingChange = AddedRequiredRequestParameter.of(
                     context.absolutePath(),
-                    context.target().getName(),
-                    context.target().getIn()
+                    context.target().get().getName(),
+                    context.target().get().getIn()
             );
             result.add(breakingChange);
             return result;
         }
+        Parameter source = context.source().get();
+        Parameter target = context.target().get();
 
-        if (!context.target().getClass().equals(context.source().getClass())) {
+        if (!target.getClass().equals(source.getClass())) {
             // Should never happen, we should always compare params of same type
             BreakingChange breakingChange = ChangedRequestParameterType.of(
                     context.absolutePath(),
-                    context.source().getClass().getName(),
-                    context.target().getClass().getName()
+                    source.getClass().getName(),
+                    target.getClass().getName()
             );
             result.add(breakingChange);
             return result;
@@ -59,9 +66,9 @@ class ParameterComparator implements Comparator<Parameter, Parameter> {
         // TODO: some types are backwards compatible
         //  - if a number becomes a string: ok
         //  - if an integer becomes a number: ok
-        if (context.source() instanceof AbstractSerializableParameter) {
-            AbstractSerializableParameter oldTypedParam = (AbstractSerializableParameter) context.source();
-            AbstractSerializableParameter newTypedParam = (AbstractSerializableParameter) context.target();
+        if (source instanceof AbstractSerializableParameter) {
+            AbstractSerializableParameter oldTypedParam = (AbstractSerializableParameter) source;
+            AbstractSerializableParameter newTypedParam = (AbstractSerializableParameter) target;
             if (!newTypedParam.getType().equals(oldTypedParam.getType())) {
                 BreakingChange breakingChange = ChangedRequestParameterType.of(
                         context.absolutePath(),

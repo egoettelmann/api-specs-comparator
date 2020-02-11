@@ -15,20 +15,26 @@ public class ComparisonUtils {
 
     public static Model extractSourceDefinition(ComparisonContext<?, ?> context, String reference) {
         ComparisonContext<?, ?> root = context.root();
-        if (root.source() instanceof Swagger) {
-            ComparisonContext<Swagger, ?> swaggerRoot = (ComparisonContext<Swagger, ?>) root;
-            return swaggerRoot.source().getDefinitions().get(simpleReference(reference));
+        if (!root.source().isPresent() || !(root.source().get() instanceof Swagger)) {
+            return null;
         }
-        return null;
+        ComparisonContext<Swagger, ?> swaggerRoot = (ComparisonContext<Swagger, ?>) root;
+        return swaggerRoot.source()
+                .map(Swagger::getDefinitions)
+                .map(d -> d.get(simpleReference(reference)))
+                .orElse(null);
     }
 
     public static Model extractTargetDefinition(ComparisonContext<?, ?> context, String reference) {
         ComparisonContext<?, ?> root = context.root();
-        if (root.target() instanceof Swagger) {
-            ComparisonContext<?, Swagger> swaggerRoot = (ComparisonContext<?, Swagger>) root;
-            return swaggerRoot.target().getDefinitions().get(simpleReference(reference));
+        if (!root.target().isPresent() || !(root.target().get() instanceof Swagger)) {
+            return null;
         }
-        return null;
+        ComparisonContext<?, Swagger> swaggerRoot = (ComparisonContext<?, Swagger>) root;
+        return swaggerRoot.target()
+                .map(Swagger::getDefinitions)
+                .map(d -> d.get(simpleReference(reference)))
+                .orElse(null);
     }
 
     public static String simpleReference(String reference) {

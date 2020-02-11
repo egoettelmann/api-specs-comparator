@@ -2,6 +2,7 @@ package com.github.egoettelmann.apispecs.comparator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ComparisonContext<S, T> {
 
@@ -33,12 +34,12 @@ public class ComparisonContext<S, T> {
         return relativePath;
     }
 
-    public S source() {
-        return source;
+    public Optional<S> source() {
+        return Optional.ofNullable(source);
     }
 
-    public T target() {
-        return target;
+    public Optional<T> target() {
+        return Optional.ofNullable(target);
     }
 
     public ComparisonContext<?, ?> parent() {
@@ -65,6 +66,13 @@ public class ComparisonContext<S, T> {
             return parent.root();
         }
         return this;
+    }
+
+    public boolean canCompare(Class clazz) {
+        if (source().isPresent() && clazz.isInstance(source().get())) {
+            return true;
+        }
+        return target().isPresent() && clazz.isInstance(target().get());
     }
 
 }

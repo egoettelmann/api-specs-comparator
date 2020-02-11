@@ -11,14 +11,14 @@ class OperationComparator implements Comparator<Operation, Operation> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {
-        return (context.source() instanceof Operation) || (context.target() instanceof Operation);
+        return context.canCompare(Operation.class);
     }
 
     @Override
     public ComparisonResult apply(ComparisonContext<Operation, Operation> context) {
         ComparisonResult result = new ComparisonResult();
 
-        if (context.target() == null) {
+        if (!context.target().isPresent()) {
             BreakingChange breakingChange = RemovedEndpoint.of(context.absolutePath());
             result.add(breakingChange);
         }

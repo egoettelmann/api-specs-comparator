@@ -12,24 +12,25 @@ import io.swagger.models.properties.ArrayProperty;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.StringProperty;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PropertyComparator implements Comparator<Property, Property> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyComparator.class);
-
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {
-        return (context.source() instanceof Property) || (context.target() instanceof Property);
+        return context.canCompare(Property.class);
     }
 
     @Override
     public ComparisonResult apply(ComparisonContext<Property, Property> context) {
         ComparisonResult result = new ComparisonResult();
 
+        if (!context.source().isPresent()) {
+            // Nothing to compare
+            return result;
+        }
+
         // Checking that no property has been removed
-        if (context.target() == null) {
+        if (!context.target().isPresent()) {
             BreakingChange breakingChange = RemovedModelProperty.of(
                     context.absolutePath()
             );
@@ -37,8 +38,8 @@ public class PropertyComparator implements Comparator<Property, Property> {
             return result;
         }
 
-        Property oldProperty = context.source();
-        Property newProperty = context.target();
+        Property oldProperty = context.source().get();
+        Property newProperty = context.target().get();
 
         // Checking that the type has not changed
         if (!newProperty.getType().equals(oldProperty.getType())) {

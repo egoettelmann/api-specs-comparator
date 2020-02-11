@@ -11,14 +11,14 @@ class ResponseComparator implements Comparator<Response, Response> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {
-        return (context.source() instanceof Response) || (context.target() instanceof Response);
+        return context.canCompare(Response.class);
     }
 
     @Override
     public ComparisonResult apply(ComparisonContext<Response, Response> context) {
         ComparisonResult result = new ComparisonResult();
 
-        if (context.target() == null) {
+        if (!context.target().isPresent()) {
             BreakingChange breakingChange = RemovedResponse.of(context.absolutePath());
             result.add(breakingChange);
         }

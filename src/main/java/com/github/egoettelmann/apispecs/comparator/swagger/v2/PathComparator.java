@@ -10,16 +10,21 @@ class PathComparator implements Comparator<Path, Path> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {
-        return (context.source() instanceof Path) || (context.target() instanceof Path);
+        return context.canCompare(Path.class);
     }
 
     @Override
     public ComparisonResult apply(final ComparisonContext<Path, Path> context) {
         ComparisonResult result = new ComparisonResult();
 
+        if (!context.source().isPresent()) {
+            // Nothing to compare
+            return result;
+        }
+
         // Checking that target is not missing
-        if (context.target() == null) {
-            context.source().getOperationMap().keySet().stream()
+        if (!context.target().isPresent()) {
+            context.source().get().getOperationMap().keySet().stream()
                     .map(method -> RemovedEndpoint.of(context.absolutePath(), method.name()))
                     .forEach(result::add);
         }

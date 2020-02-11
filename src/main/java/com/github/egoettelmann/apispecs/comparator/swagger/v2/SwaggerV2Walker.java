@@ -40,16 +40,18 @@ class SwaggerV2Walker {
         ComparisonResult result = new ComparisonResult();
 
         // Checking for null
-        if (context.source() == null || context.target() == null) {
+        if (!context.source().isPresent() || !context.target().isPresent()) {
             return result;
         }
+        Swagger source = context.source().get();
+        Swagger target = context.target().get();
 
         // Looping over all existing paths
-        for (Map.Entry<String, Path> oldPathEntry : context.source().getPaths().entrySet()) {
+        for (Map.Entry<String, Path> oldPathEntry : source.getPaths().entrySet()) {
             // Building context
             String pathName = oldPathEntry.getKey();
             Path oldPath = oldPathEntry.getValue();
-            Path newPath = context.target().getPaths().get(pathName);
+            Path newPath = target.getPaths().get(pathName);
             ComparisonContext<Path, Path> pathContext = context
                     .extend(oldPath, newPath)
                     .path(pathName);
@@ -68,16 +70,18 @@ class SwaggerV2Walker {
         ComparisonResult result = new ComparisonResult();
 
         // Checking for null
-        if (context.source() == null || context.target() == null) {
+        if (!context.source().isPresent() || !context.target().isPresent()) {
             return result;
         }
+        Path source = context.source().get();
+        Path target = context.target().get();
 
         // Looping over all existing operations
-        for (Map.Entry<HttpMethod, Operation> oldOperationEntry : context.source().getOperationMap().entrySet()) {
+        for (Map.Entry<HttpMethod, Operation> oldOperationEntry : source.getOperationMap().entrySet()) {
             // Building context
             HttpMethod method = oldOperationEntry.getKey();
             Operation oldOperation = oldOperationEntry.getValue();
-            Operation newOperation = context.target().getOperationMap().get(method);
+            Operation newOperation = target.getOperationMap().get(method);
             ComparisonContext<Operation, Operation> operationContext = context
                     .extend(oldOperation, newOperation)
                     .path(method.name());
@@ -92,23 +96,25 @@ class SwaggerV2Walker {
         return result;
     }
 
-    private ComparisonResult walkOperation(ComparisonContext<Operation, Operation> operationContext) {
+    private ComparisonResult walkOperation(ComparisonContext<Operation, Operation> context) {
         ComparisonResult result = new ComparisonResult();
 
         // Checking for null
-        if (operationContext.source() == null || operationContext.target() == null) {
+        if (!context.source().isPresent() || !context.target().isPresent()) {
             return result;
         }
+        Operation source = context.source().get();
+        Operation target = context.target().get();
 
         // Looping over all existing parameters
-        for (Parameter oldParam : operationContext.source().getParameters()) {
+        for (Parameter oldParam : source.getParameters()) {
             // Building context
-            Parameter newParam = operationContext.target().getParameters().stream()
+            Parameter newParam = target.getParameters().stream()
                     .filter(p -> p.getName().equals(oldParam.getName()))
                     .filter(p -> p.getIn().equals(oldParam.getIn()))
                     .findFirst()
                     .orElse(null);
-            ComparisonContext<Parameter, Parameter> parameterContext = operationContext
+            ComparisonContext<Parameter, Parameter> parameterContext = context
                     .extend(oldParam, newParam)
                     .path(oldParam.getName())
                     .path(oldParam.getIn());
@@ -121,14 +127,14 @@ class SwaggerV2Walker {
         }
 
         // Looping over all new parameters
-        for (Parameter newParam : operationContext.target().getParameters()) {
-            Optional<Parameter> oldParam = operationContext.source().getParameters().stream()
+        for (Parameter newParam : target.getParameters()) {
+            Optional<Parameter> oldParam = source.getParameters().stream()
                     .filter(p -> p.getName().equals(newParam.getName()))
                     .filter(p -> p.getIn().equals(newParam.getIn()))
                     .findAny();
 
             if (!oldParam.isPresent()) {
-                ComparisonContext<Parameter, Parameter> parameterContext = operationContext
+                ComparisonContext<Parameter, Parameter> parameterContext = context
                         .extend((Parameter) null, newParam)
                         .path(newParam.getName())
                         .path(newParam.getIn());
@@ -142,15 +148,15 @@ class SwaggerV2Walker {
         }
 
         // Looping over all responses
-        for (Map.Entry<String, Response> oldResponseEntry : operationContext.source().getResponses().entrySet()) {
+        for (Map.Entry<String, Response> oldResponseEntry : source.getResponses().entrySet()) {
             // Building context
             String oldCode = oldResponseEntry.getKey();
             Response oldResponse = oldResponseEntry.getValue();
             Response newResponse = null;
-            if (operationContext.target().getResponses() != null) {
-                newResponse = operationContext.target().getResponses().get(oldCode);
+            if (target.getResponses() != null) {
+                newResponse = target.getResponses().get(oldCode);
             }
-            ComparisonContext<Response, Response> responseContext = operationContext
+            ComparisonContext<Response, Response> responseContext = context
                     .extend(oldResponse, newResponse)
                     .path(oldCode);
 
@@ -164,21 +170,23 @@ class SwaggerV2Walker {
         return result;
     }
 
-    private ComparisonResult walkParameter(ComparisonContext<Parameter, Parameter> parameterContext) {
+    private ComparisonResult walkParameter(ComparisonContext<Parameter, Parameter> context) {
         ComparisonResult result = new ComparisonResult();
 
         // Checking for null
-        if (parameterContext.source() == null || parameterContext.target() == null) {
+        if (!context.source().isPresent() || !context.target().isPresent()) {
             return result;
         }
+        Parameter source = context.source().get();
+        Parameter target = context.target().get();
 
         // If body parameter, extracting model
-        if (parameterContext.source() instanceof BodyParameter) {
-            BodyParameter oldBodyParam = (BodyParameter) parameterContext.source();
-            BodyParameter newBodyParam = (BodyParameter) parameterContext.target();
+        if (source instanceof BodyParameter) {
+            BodyParameter oldBodyParam = (BodyParameter) source;
+            BodyParameter newBodyParam = (BodyParameter) target;
             Model oldSchema = oldBodyParam.getSchema();
             Model newSchema = newBodyParam.getSchema();
-            ComparisonContext<Model, Model> modelContext = parameterContext
+            ComparisonContext<Model, Model> modelContext = context
                     .extend(oldSchema, newSchema);
 
             // Comparing
@@ -190,12 +198,12 @@ class SwaggerV2Walker {
 
         // TODO: add a unit test for this case
         // If ref parameter, extracting model
-        if (parameterContext.source() instanceof RefParameter) {
-            RefParameter oldRefParameter = (RefParameter) parameterContext.source();
-            RefParameter newRefParameter = (RefParameter) parameterContext.target();
-            Model oldSchema = ComparisonUtils.extractSourceDefinition(parameterContext, oldRefParameter.getSimpleRef());
-            Model newSchema = ComparisonUtils.extractTargetDefinition(parameterContext, newRefParameter.getSimpleRef());
-            ComparisonContext<Model, Model> modelContext = parameterContext
+        if (source instanceof RefParameter) {
+            RefParameter oldRefParameter = (RefParameter) source;
+            RefParameter newRefParameter = (RefParameter) target;
+            Model oldSchema = ComparisonUtils.extractSourceDefinition(context, oldRefParameter.getSimpleRef());
+            Model newSchema = ComparisonUtils.extractTargetDefinition(context, newRefParameter.getSimpleRef());
+            ComparisonContext<Model, Model> modelContext = context
                     .extend(oldSchema, newSchema);
 
             // Comparing
@@ -212,13 +220,15 @@ class SwaggerV2Walker {
         ComparisonResult result = new ComparisonResult();
 
         // Checking for null
-        if (context.source() == null || context.target() == null) {
+        if (!context.source().isPresent() || !context.target().isPresent()) {
             return result;
         }
+        Response source = context.source().get();
+        Response target = context.target().get();
 
         // Building context
-        Model oldSchema = context.source().getResponseSchema();
-        Model newSchema = context.target().getResponseSchema();
+        Model oldSchema = source.getResponseSchema();
+        Model newSchema = target.getResponseSchema();
         ComparisonContext<Model, Model> modelContext = context
                 .extend(oldSchema, newSchema);
 
@@ -235,15 +245,17 @@ class SwaggerV2Walker {
         ComparisonResult result = new ComparisonResult();
 
         // Checking for null
-        if (context.source() == null || context.target() == null) {
+        if (!context.source().isPresent() || !context.target().isPresent()) {
             return result;
         }
+        Model source = context.source().get();
+        Model target = context.target().get();
 
         // No source properties, comparing with referenced model
-        if (context.source().getProperties() == null) {
-            Model oldModel = ComparisonUtils.extractSourceDefinition(context, context.source().getReference());
+        if (source.getProperties() == null) {
+            Model oldModel = ComparisonUtils.extractSourceDefinition(context, source.getReference());
             ComparisonContext<Model, Model> modelContext = context
-                    .extend(oldModel, context.target());
+                    .extend(oldModel, target);
 
             // Comparing
             result.merge(comparatorChain.apply(modelContext));
@@ -255,10 +267,10 @@ class SwaggerV2Walker {
         }
 
         // No target properties, comparing with referenced model
-        if (context.target().getProperties() == null) {
-            Model targetModel = ComparisonUtils.extractTargetDefinition(context, context.target().getReference());
+        if (target.getProperties() == null) {
+            Model targetModel = ComparisonUtils.extractTargetDefinition(context, target.getReference());
             ComparisonContext<Model, Model> modelContext = context
-                    .extend(context.source(), targetModel);
+                    .extend(source, targetModel);
 
             // Comparing
             result.merge(comparatorChain.apply(modelContext));
@@ -270,10 +282,10 @@ class SwaggerV2Walker {
         }
 
         // Looping over all properties
-        for (Map.Entry<String, Property> propertyEntry : context.source().getProperties().entrySet()) {
+        for (Map.Entry<String, Property> propertyEntry : source.getProperties().entrySet()) {
             String oldName = propertyEntry.getKey();
             Property oldProperty = propertyEntry.getValue();
-            Property newProperty = context.target().getProperties().get(oldName);
+            Property newProperty = target.getProperties().get(oldName);
             ComparisonContext<Property, Property> propertyContext = context
                     .extend(oldProperty, newProperty)
                     .path(oldName);

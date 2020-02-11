@@ -13,14 +13,14 @@ public class ModelComparator implements Comparator<Model, Model> {
 
     @Override
     public boolean accept(ComparisonContext<?, ?> context) {
-        return (context.source() instanceof Model) || (context.target() instanceof Model);
+        return context.canCompare(Model.class);
     }
 
     @Override
     public ComparisonResult apply(ComparisonContext<Model, Model> context) {
         ComparisonResult result = new ComparisonResult();
 
-        if (context.source() == null || context.target() == null) {
+        if (!context.source().isPresent() || !context.target().isPresent()) {
             LOGGER.warn("Response has no schema: '{}'", context.absolutePath());
             return result;
         }

@@ -49,7 +49,7 @@ public class SwaggerV2Comparator implements ApiSpecificationsComparator {
         try {
             newSwaggerSpecs = objectMapper.readValue(newSpecifications, Swagger.class);
         } catch (IOException e) {
-            LOGGER.error("Could not deserialize new API Specifications as Swagger V2 '{}'", newSpecifications, e);
+            LOGGER.info("Could not deserialize new API Specifications as Swagger V2 '{}'", newSpecifications, e);
             return Optional.empty();
         }
 
