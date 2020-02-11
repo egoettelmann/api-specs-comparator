@@ -2,6 +2,7 @@ package com.github.egoettelmann.apispecs.comparator.swagger.v2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.egoettelmann.apispecs.comparator.ApiSpecificationsComparator;
+import com.github.egoettelmann.apispecs.comparator.Comparator;
 import com.github.egoettelmann.apispecs.comparator.ComparatorChain;
 import com.github.egoettelmann.apispecs.comparator.ComparisonResult;
 import io.swagger.models.Swagger;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 public class SwaggerV2Comparator implements ApiSpecificationsComparator {
@@ -22,16 +24,16 @@ public class SwaggerV2Comparator implements ApiSpecificationsComparator {
     private ComparatorChain comparatorChain;
 
     public SwaggerV2Comparator() {
-        this(defaultComparatorChain());
+        this(defaultComparators());
     }
 
-    public SwaggerV2Comparator(ComparatorChain comparatorChain) {
-        this(Json.mapper(), comparatorChain);
+    public SwaggerV2Comparator(List<Comparator> comparators) {
+        this(Json.mapper(), comparators);
     }
 
-    public SwaggerV2Comparator(ObjectMapper objectMapper, ComparatorChain comparatorChain) {
+    public SwaggerV2Comparator(ObjectMapper objectMapper, List<Comparator> comparators) {
         this.objectMapper = objectMapper;
-        this.comparatorChain = comparatorChain;
+        this.comparatorChain = new ComparatorChain(comparators);
     }
 
     public Optional<ComparisonResult> compare(String oldSpecifications, String newSpecifications) {
@@ -59,17 +61,15 @@ public class SwaggerV2Comparator implements ApiSpecificationsComparator {
         );
     }
 
-    public static ComparatorChain defaultComparatorChain() {
-        return new ComparatorChain(
-                Arrays.asList(
-                        new SwaggerRootComparator(),
-                        new PathComparator(),
-                        new OperationComparator(),
-                        new ParameterComparator(),
-                        new ResponseComparator(),
-                        new ModelComparator(),
-                        new PropertyComparator()
-                )
+    public static List<Comparator> defaultComparators() {
+        return Arrays.asList(
+                new SwaggerRootComparator(),
+                new PathComparator(),
+                new OperationComparator(),
+                new ParameterComparator(),
+                new ResponseComparator(),
+                new ModelComparator(),
+                new PropertyComparator()
         );
     }
 
