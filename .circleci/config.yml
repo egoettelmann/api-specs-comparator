@@ -11,7 +11,8 @@ jobs:
       - checkout
       - run: mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
       - persist_to_workspace:
-          root: /pom.xml
+          root: .
+          path: pom.xml
   build:
     docker:
       - image: circleci/openjdk:8u242-stretch
