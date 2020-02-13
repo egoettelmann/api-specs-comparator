@@ -11,8 +11,9 @@ jobs:
       - checkout
       - run: |
           mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
+          mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
           PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-          pwd
+          ls -al
           git config user.name "CircleCI"
           git config user.email "git@circleci.com"
           git add .
