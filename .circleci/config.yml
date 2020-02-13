@@ -10,15 +10,15 @@ jobs:
           mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
           mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
           PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-          ls -al
           git config user.name "CircleCI"
           git config user.email "git@circleci.com"
           git add .
           git commit -m "Release version $PROJECT_VERSION [skip ci]"
           git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
       - persist_to_workspace:
-          root: /home/circleci
-          path: project
+          root: .
+          paths:
+            - .
   build:
     docker:
       - image: circleci/openjdk:8u242-stretch
@@ -39,8 +39,9 @@ jobs:
           git add .
           git commit -m "Next development iteration $PROJECT_VERSION [skip ci]"
       - persist_to_workspace:
-          root: /home/circleci
-          path: project
+          root: .
+          paths:
+            - .
 
 workflows:
   build-and-deploy:
