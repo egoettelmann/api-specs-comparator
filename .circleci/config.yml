@@ -5,10 +5,14 @@ orbs:
 
 jobs:
   set-version:
+    docker:
+      - image: circleci/openjdk:8u181-stretch
     steps:
       - checkout
       - run: mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
   build:
+    docker:
+      - image: circleci/openjdk:8u181-stretch
     steps:
       - checkout
       - run: mvn clean install
