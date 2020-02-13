@@ -20,8 +20,7 @@ jobs:
           git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
       - persist_to_workspace:
           root: /root
-          path:
-            - project
+          path: project
   build:
     docker:
       - image: circleci/openjdk:8u242-stretch
