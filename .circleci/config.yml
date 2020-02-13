@@ -7,16 +7,7 @@ jobs:
   set-version:
     steps:
       - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "pom.xml" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-       - run: mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
-       - save_cache:
-           paths:
-             - ~/.m2
-           key: v1-dependencies-{{ checksum "pom.xml" }}
+      - run: mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
   build:
     steps:
       - checkout
@@ -29,7 +20,7 @@ workflows:
           filters:
             branches:
               only: ci-tests
-      - build: # checkout, build, test, and upload test results
+      - build:
           filters:
             branches:
               only: ci-tests
