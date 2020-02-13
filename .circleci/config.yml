@@ -24,14 +24,14 @@ jobs:
       - image: circleci/openjdk:8u242-stretch
     steps:
       - attach_workspace:
-          at: ~/
+          at: .
       - run: mvn clean install
   release:
     docker:
       - image: circleci/openjdk:8u242-stretch
     steps:
       - attach_workspace:
-          at: ~/
+          at: .
       - run: |
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
