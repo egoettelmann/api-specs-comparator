@@ -11,7 +11,7 @@ jobs:
       - checkout
       - run: mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
       - persist_to_workspace:
-          root: .
+          root: /
           path: pom.xml
   build:
     docker:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: .
+          at: /
       - run: mvn clean install
 
 workflows:
