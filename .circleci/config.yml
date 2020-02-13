@@ -3,10 +3,33 @@ version: 2.1
 orbs:
   maven: circleci/maven@0.0.12
 
+jobs:
+  set-version:
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "pom.xml" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+       - run: mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
+       - save_cache:
+           paths:
+             - ~/.m2
+           key: v1-dependencies-{{ checksum "pom.xml" }}
+  build:
+    steps:
+      - checkout
+      - run: mvn clean install
+
 workflows:
-  maven_test:
+  build-deploy:
     jobs:
-      - maven/test: # checkout, build, test, and upload test results
+      - set-version:
+          filters:
+            branches:
+              only: ci-tests
+      - build: # checkout, build, test, and upload test results
           filters:
             branches:
               only: ci-tests
