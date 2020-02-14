@@ -8,6 +8,7 @@ import io.swagger.models.*;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.RefParameter;
+import io.swagger.models.properties.ArrayProperty;
 import io.swagger.models.properties.Property;
 
 import java.util.Map;
@@ -289,6 +290,35 @@ class SwaggerV2Walker {
             ComparisonContext<Property, Property> propertyContext = context
                     .extend(oldProperty, newProperty)
                     .path(oldName);
+
+            // Comparing
+            result.merge(comparatorChain.apply(propertyContext));
+
+            // Walking response
+            result.merge(walkProperty(propertyContext));
+        }
+
+        return result;
+    }
+
+    private ComparisonResult walkProperty(ComparisonContext<Property, Property> context) {
+        ComparisonResult result = new ComparisonResult();
+
+        // Checking for null
+        if (!context.source().isPresent() || !context.target().isPresent()) {
+            return result;
+        }
+        Property source = context.source().get();
+        Property target = context.target().get();
+
+        if (source instanceof ArrayProperty && target instanceof ArrayProperty) {
+            ArrayProperty oldArrayProperty = (ArrayProperty) source;
+            ArrayProperty newArrayProperty = (ArrayProperty) target;
+            Property oldProperty = oldArrayProperty.getItems();
+            Property newProperty = newArrayProperty.getItems();
+            ComparisonContext<Property, Property> propertyContext = context
+                    .extend(oldProperty, newProperty)
+                    .path("item");
 
             // Comparing
             result.merge(comparatorChain.apply(propertyContext));

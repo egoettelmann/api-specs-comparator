@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -62,8 +63,14 @@ public class SwaggerV2Comparator implements ApiSpecificationsComparator {
         );
     }
 
+    /**
+     * The default comparators.
+     * Includes the default property comparators.
+     *
+     * @return the list of default comparators
+     */
     public static List<Comparator> defaultComparators() {
-        return Arrays.asList(
+        List<Comparator> comparators = new ArrayList<>(Arrays.asList(
                 new SwaggerRootComparator(),
                 new PathComparator(),
                 new OperationComparator(),
@@ -71,6 +78,21 @@ public class SwaggerV2Comparator implements ApiSpecificationsComparator {
                 new ResponseComparator(),
                 new ModelComparator(),
                 new PropertyComparator()
+        ));
+        comparators.addAll(defaultPropertyComparators());
+        return comparators;
+    }
+
+    /**
+     * The default property comparators.
+     *
+     * @return the list of default property comparators
+     */
+    public static List<Comparator> defaultPropertyComparators() {
+        return Arrays.asList(
+                new NumericPropertyComparator(),
+                new StringPropertyComparator(),
+                new ArrayPropertyComparator()
         );
     }
 
