@@ -31,6 +31,9 @@ jobs:
             mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+      - run:
+          name: "Commit version"
+          command: |
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
             git add .
@@ -47,7 +50,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Clean Install"
+          name: "Clean install"
           command: mvn clean install
   # Release the project: tag and push current commit to Github
   release:
@@ -57,7 +60,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Tag and Push"
+          name: "Tag and push"
           command: |
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
@@ -94,11 +97,15 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Push Next Snapshot"
+          name: "Update snapshot version"
           command: |
             mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+      - run:
+          name: "Commit and push"
+          command: |
+            mkdir ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
             git add .

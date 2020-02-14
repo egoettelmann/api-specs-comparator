@@ -6,7 +6,7 @@
 
     <groupId>com.github.egoettelmann</groupId>
     <artifactId>api-specs-comparator</artifactId>
-    <version>0.1.3</version>
+    <version>0.1.4-SNAPSHOT</version>
     <name>API Specifications Comparator</name>
     <description>Compare API specifications to detect breaking changes</description>
 
