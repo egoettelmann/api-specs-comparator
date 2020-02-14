@@ -55,8 +55,8 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Clean install"
-          command: mvn clean install
+          name: "Clean package"
+          command: mvn clean package
   # Release the project: tag and push current commit to Github
   release:
     docker:
@@ -87,6 +87,8 @@ jobs:
       - run:
           name: "Deploy to Maven Central"
           command: |
+            echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+            echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
             mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
       - persist_to_workspace:
           root: .
