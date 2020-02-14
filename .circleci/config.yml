@@ -4,19 +4,27 @@ version: 2.1
 parameters:
   branch-release:
     type: string
-    default: "ci-tests"
+    default: "release"
   branch-master:
     type: string
-    default: "ci-tests"
+    default: "master"
   branch-develop:
     type: string
-    default: "ci-tests"
+    default: "develop"
   git-user:
     type: string
     default: "CircleCI"
   git-email:
     type: string
     default: "git@circleci.com"
+# Additionally, following variables need to be defined:
+# - SONATYPE_USERNAME
+# - SONATYPE_PASSWORD
+# - GPG_EXECUTABLE
+# - GPG_PASSPHRASE
+# - GPG_OWNERTRUST
+# - GPG_SECRET_KEYS
+# - GITHUB_TOKEN
 
 jobs:
   # Update the current version of the project and commit it to Git
@@ -63,7 +71,7 @@ jobs:
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
-            echo "Tagging ..."
+            git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
             git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-master >>
       - persist_to_workspace:
           root: .
@@ -79,7 +87,7 @@ jobs:
       - run:
           name: "Deploy to Maven Central"
           command: |
-            echo "Deploying ..."
+            mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
       - persist_to_workspace:
           root: .
           paths:
@@ -118,13 +126,13 @@ workflows:
       - update-version:
           filters:
             branches:
-              only: << pipeline.parameters.branch-release >>
+              only: /.*/
       - build:
           requires:
             - update-version
           filters:
             branches:
-              only: << pipeline.parameters.branch-release >>
+              only: /.*/
       - release:
           requires:
             - build

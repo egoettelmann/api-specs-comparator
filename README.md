@@ -18,7 +18,7 @@ Add to your pom the following Maven dependency:
 <dependency>
   <groupId>com.github.egoettelmann</groupId>
   <artifactId>api-specs-comparator</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
