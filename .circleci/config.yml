@@ -71,10 +71,8 @@ jobs:
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
-            git rev-parse --short HEAD
             git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
-            git log -5 --format=oneline --abbrev-commit
-            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-master >>
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git HEAD:<< pipeline.parameters.branch-master >>
       - persist_to_workspace:
           root: .
           paths:
@@ -121,7 +119,7 @@ jobs:
             git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
             git fetch --all
             git merge origin/<< pipeline.parameters.branch-develop >>
-            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-develop >>
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git HEAD:<< pipeline.parameters.branch-develop >>
             git push --delete https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-release >>
       - persist_to_workspace:
           root: .
