@@ -72,6 +72,7 @@ jobs:
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
             git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
+            git status
             git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-master >>
       - persist_to_workspace:
           root: .
@@ -87,8 +88,8 @@ jobs:
       - run:
           name: "Deploy to Maven Central"
           command: |
-            echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
-            echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+            echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import --no-tty --batch --yes
+            echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust --no-tty --batch --yes
             mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
       - persist_to_workspace:
           root: .
