@@ -31,9 +31,6 @@ jobs:
             mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-      - run:
-          name: "Commit version"
-          command: |
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
             git add .
@@ -91,20 +88,15 @@ jobs:
   prepare-next:
     docker:
       - image: circleci/openjdk:8u242-stretch
-    environment:
-      TARGET_BRANCH: << pipeline.parameters.branch-develop >>
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: "Update snapshot version"
+          name: "Push next snapshot"
           command: |
             mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-      - run:
-          name: "Commit and push"
-          command: |
             mkdir ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
@@ -114,7 +106,7 @@ jobs:
             git fetch --all
             git merge origin/<< pipeline.parameters.branch-develop >>
             git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-develop >>
-            git push origin --delete << pipeline.parameters.branch-release >>
+            git push --delete https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-release >>
       - persist_to_workspace:
           root: .
           paths:
