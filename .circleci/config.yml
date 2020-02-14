@@ -65,7 +65,7 @@ jobs:
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
-            git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
+            echo "Tagging ..."
             git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git $TARGET_BRANCH
       - persist_to_workspace:
           root: .
@@ -81,7 +81,7 @@ jobs:
       - run:
           name: "Deploy to Maven Central"
           command: |
-            mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
+            echo "Deploying ..."
       - persist_to_workspace:
           root: .
           paths:
