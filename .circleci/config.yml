@@ -34,7 +34,7 @@ jobs:
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
             git add .
-            git commit -m "[<< pipeline.parameters.git-user >>] [skip ci] Release version $PROJECT_VERSION"
+            git commit -m "[<< pipeline.parameters.git-user >>] Release version $PROJECT_VERSION [skip ci]"
       - persist_to_workspace:
           root: .
           paths:
@@ -53,8 +53,6 @@ jobs:
   release:
     docker:
       - image: circleci/openjdk:8u242-stretch
-    environment:
-      TARGET_BRANCH: << pipeline.parameters.branch-master >>
     steps:
       - attach_workspace:
           at: .
@@ -66,7 +64,7 @@ jobs:
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
             echo "Tagging ..."
-            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git $TARGET_BRANCH
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-master >>
       - persist_to_workspace:
           root: .
           paths:
@@ -104,10 +102,12 @@ jobs:
             git config user.name "<< pipeline.parameters.git-user >>"
             git config user.email "<< pipeline.parameters.git-email >>"
             git add .
-            git commit -m "[<< pipeline.parameters.git-user >>] [skip ci] Next development iteration $PROJECT_VERSION"
+            git commit -m "[<< pipeline.parameters.git-user >>] Prepare next version $PROJECT_VERSION [skip ci]"
+            git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
             git fetch --all
-            git merge origin/$TARGET_BRANCH
-            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git $TARGET_BRANCH
+            git merge origin/<< pipeline.parameters.branch-develop >>
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-develop >>
+            git push origin --delete << pipeline.parameters.branch-release >>
       - persist_to_workspace:
           root: .
           paths:
