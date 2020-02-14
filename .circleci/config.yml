@@ -1,5 +1,23 @@
 version: 2.1
 
+# Defining parameters
+parameters:
+  branch-release:
+    type: string
+    default: "ci-tests"
+  branch-master:
+    type: string
+    default: "ci-tests"
+  branch-develop:
+    type: string
+    default: "ci-tests"
+  git-user:
+    type: string
+    default: "CircleCI"
+  git-email:
+    type: string
+    default: "git@circleci.com"
+
 jobs:
   # Update the current version of the project and commit it to Git
   update-version:
@@ -8,15 +26,15 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Update version
+          name: "Update version"
           command: |
             mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-            git config user.name "CircleCI"
-            git config user.email "git@circleci.com"
+            git config user.name "<< pipeline.parameters.git-user >>"
+            git config user.email "<< pipeline.parameters.git-email >>"
             git add .
-            git commit -m "Release version $PROJECT_VERSION [skip ci]"
+            git commit -m "[<< pipeline.parameters.git-user >>] [skip ci] Release version $PROJECT_VERSION"
       - persist_to_workspace:
           root: .
           paths:
@@ -29,24 +47,26 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Clean Install
+          name: "Clean Install"
           command: mvn clean install
   # Release the project: tag and push current commit to Github
   release:
     docker:
       - image: circleci/openjdk:8u242-stretch
+    environment:
+      TARGET_BRANCH: << pipeline.parameters.branch-master >>
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Tag and Push
+          name: "Tag and Push"
           command: |
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-            git config user.name "CircleCI"
-            git config user.email "git@circleci.com"
-            echo "Tagging ..."
-            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git ci-tests
+            git config user.name "<< pipeline.parameters.git-user >>"
+            git config user.email "<< pipeline.parameters.git-email >>"
+            git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git $TARGET_BRANCH
       - persist_to_workspace:
           root: .
           paths:
@@ -59,9 +79,9 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Deploy to Maven Central
+          name: "Deploy to Maven Central"
           command: |
-            echo "Deploying ..."
+            mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
       - persist_to_workspace:
           root: .
           paths:
@@ -70,20 +90,24 @@ jobs:
   prepare-next:
     docker:
       - image: circleci/openjdk:8u242-stretch
+    environment:
+      TARGET_BRANCH: << pipeline.parameters.branch-develop >>
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Push Next Snapshot
+          name: "Push Next Snapshot"
           command: |
             mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
             mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
             PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-            git config user.name "CircleCI"
-            git config user.email "git@circleci.com"
+            git config user.name "<< pipeline.parameters.git-user >>"
+            git config user.email "<< pipeline.parameters.git-email >>"
             git add .
-            git commit -m "Next development iteration $PROJECT_VERSION [skip ci]"
-            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git ci-tests
+            git commit -m "[<< pipeline.parameters.git-user >>] [skip ci] Next development iteration $PROJECT_VERSION"
+            git fetch --all
+            git merge origin/$TARGET_BRANCH
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git $TARGET_BRANCH
       - persist_to_workspace:
           root: .
           paths:
@@ -95,28 +119,28 @@ workflows:
       - update-version:
           filters:
             branches:
-              only: ci-tests
+              only: << pipeline.parameters.branch-release >>
       - build:
           requires:
             - update-version
           filters:
             branches:
-              only: ci-tests
+              only: << pipeline.parameters.branch-release >>
       - release:
           requires:
             - build
           filters:
             branches:
-              only: ci-tests
+              only: << pipeline.parameters.branch-release >>
       - publish:
           requires:
             - release
           filters:
             branches:
-              only: ci-tests
+              only: << pipeline.parameters.branch-release >>
       - prepare-next:
           requires:
             - publish
           filters:
             branches:
-              only: ci-tests
+              only: << pipeline.parameters.branch-release >>
