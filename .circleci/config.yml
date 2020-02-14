@@ -1,43 +1,89 @@
 version: 2.1
 
 jobs:
-  set-version:
+  # Update the current version of the project and commit it to Git
+  update-version:
     docker:
       - image: circleci/openjdk:8u242-stretch
     steps:
       - checkout
-      - run: |
-          mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
-          mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
-          PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-          git config user.name "CircleCI"
-          git config user.email "git@circleci.com"
-          git add .
-          git commit -m "Release version $PROJECT_VERSION [skip ci]"
-          git tag -a "v$PROJECT_VERSION" -m "Release $PROJECT_VERSION"
+      - run:
+          name: Update version
+          command: |
+            mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
+            mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+            PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+            git config user.name "CircleCI"
+            git config user.email "git@circleci.com"
+            git add .
+            git commit -m "Release version $PROJECT_VERSION [skip ci]"
       - persist_to_workspace:
           root: .
           paths:
             - .
+  # Build and test the project
   build:
     docker:
       - image: circleci/openjdk:8u242-stretch
     steps:
       - attach_workspace:
           at: .
-      - run: mvn clean install
+      - run:
+          name: Clean Install
+          command: mvn clean install
+  # Release the project: tag and push current commit to Github
   release:
     docker:
       - image: circleci/openjdk:8u242-stretch
     steps:
       - attach_workspace:
           at: .
-      - run: |
-          mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
-          mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
-          PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-          git add .
-          git commit -m "Next development iteration $PROJECT_VERSION [skip ci]"
+      - run:
+          name: Tag and Push
+          command: |
+            mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+            PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+            git config user.name "CircleCI"
+            git config user.email "git@circleci.com"
+            echo "Tagging ..."
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git ci-tests
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  # Publish the artifact to Maven Central
+  publish:
+    docker:
+      - image: circleci/openjdk:8u242-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Deploy to Maven Central
+          command: |
+            echo "Deploying ..."
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  # Prepare next development iteration with SNAPSHOT
+  prepare-next:
+    docker:
+      - image: circleci/openjdk:8u242-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Push Next Snapshot
+          command: |
+            mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
+            mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+            PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+            git config user.name "CircleCI"
+            git config user.email "git@circleci.com"
+            git add .
+            git commit -m "Next development iteration $PROJECT_VERSION [skip ci]"
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git ci-tests
       - persist_to_workspace:
           root: .
           paths:
@@ -46,19 +92,31 @@ jobs:
 workflows:
   build-and-deploy:
     jobs:
-      - set-version:
+      - update-version:
           filters:
             branches:
               only: ci-tests
       - build:
           requires:
-            - set-version
+            - update-version
           filters:
             branches:
               only: ci-tests
       - release:
           requires:
             - build
+          filters:
+            branches:
+              only: ci-tests
+      - publish:
+          requires:
+            - release
+          filters:
+            branches:
+              only: ci-tests
+      - prepare-next:
+          requires:
+            - publish
           filters:
             branches:
               only: ci-tests
