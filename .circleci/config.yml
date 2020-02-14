@@ -1,0 +1,145 @@
+version: 2.1
+
+# Defining parameters
+parameters:
+  branch-release:
+    type: string
+    default: "ci-tests"
+  branch-master:
+    type: string
+    default: "ci-tests"
+  branch-develop:
+    type: string
+    default: "ci-tests"
+  git-user:
+    type: string
+    default: "CircleCI"
+  git-email:
+    type: string
+    default: "git@circleci.com"
+
+jobs:
+  # Update the current version of the project and commit it to Git
+  update-version:
+    docker:
+      - image: circleci/openjdk:8u242-stretch
+    steps:
+      - checkout
+      - run:
+          name: "Update version"
+          command: |
+            mvn versions:set -DremoveSnapshot=true -DgenerateBackupPoms=false
+            mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+            PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+            git config user.name "<< pipeline.parameters.git-user >>"
+            git config user.email "<< pipeline.parameters.git-email >>"
+            git add .
+            git commit -m "[<< pipeline.parameters.git-user >>] Release version $PROJECT_VERSION [skip ci]"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  # Build and test the project
+  build:
+    docker:
+      - image: circleci/openjdk:8u242-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Clean install"
+          command: mvn clean install
+  # Release the project: tag and push current commit to Github
+  release:
+    docker:
+      - image: circleci/openjdk:8u242-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Tag and push"
+          command: |
+            mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+            PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+            git config user.name "<< pipeline.parameters.git-user >>"
+            git config user.email "<< pipeline.parameters.git-email >>"
+            echo "Tagging ..."
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-master >>
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  # Publish the artifact to Maven Central
+  publish:
+    docker:
+      - image: circleci/openjdk:8u242-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Deploy to Maven Central"
+          command: |
+            echo "Deploying ..."
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  # Prepare next development iteration with SNAPSHOT
+  prepare-next:
+    docker:
+      - image: circleci/openjdk:8u242-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Push next snapshot"
+          command: |
+            mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
+            mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+            PROJECT_VERSION=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+            mkdir ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+            git config user.name "<< pipeline.parameters.git-user >>"
+            git config user.email "<< pipeline.parameters.git-email >>"
+            git add .
+            git commit -m "[<< pipeline.parameters.git-user >>] Prepare next version $PROJECT_VERSION [skip ci]"
+            git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+            git fetch --all
+            git merge origin/<< pipeline.parameters.branch-develop >>
+            git push --follow-tags https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-develop >>
+            git push --delete https://${GITHUB_TOKEN}@github.com/egoettelmann/api-specs-comparator.git << pipeline.parameters.branch-release >>
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - update-version:
+          filters:
+            branches:
+              only: << pipeline.parameters.branch-release >>
+      - build:
+          requires:
+            - update-version
+          filters:
+            branches:
+              only: << pipeline.parameters.branch-release >>
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              only: << pipeline.parameters.branch-release >>
+      - publish:
+          requires:
+            - release
+          filters:
+            branches:
+              only: << pipeline.parameters.branch-release >>
+      - prepare-next:
+          requires:
+            - publish
+          filters:
+            branches:
+              only: << pipeline.parameters.branch-release >>
